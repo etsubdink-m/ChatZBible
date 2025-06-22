@@ -10,10 +10,11 @@ from langchain.chat_models import init_chat_model
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langsmith import traceable, Client
+
 
 from config.settings import config
 
@@ -38,7 +39,8 @@ class BiblicalRAGEngine:
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=config.CHUNK_SIZE,
             chunk_overlap=config.CHUNK_OVERLAP,
-            separators=["\n\n", "\n", ". ", " "]
+            separators=["\n\n", "\n", ". ", " "],
+            add_start_index=True,  # track index in original document
         )
         
         # Setup components
@@ -67,30 +69,33 @@ class BiblicalRAGEngine:
         self.embeddings = GoogleGenerativeAIEmbeddings(
             model="models/embedding-001"
         )
+
+    def _setup_langsmith(self):
+        """Setup LangSmith tracing if configured"""
+        if config.LANGSMITH_API_KEY:
+            os.environ["LANGSMITH_API_KEY"] = config.LANGSMITH_API_KEY
+        
+        if config.LANGSMITH_TRACING:
+            os.environ["LANGSMITH_TRACING"] = "true"
+            
+        if config.LANGSMITH_PROJECT:
+            os.environ["LANGSMITH_PROJECT"] = config.LANGSMITH_PROJECT
+        
     
     def _setup_prompt(self):
-        """Setup the biblical RAG prompt template"""
-        template = """You are a knowledgeable and helpful Christian biblical assistant. 
-Use the following biblical passages to answer the question accurately and thoughtfully.
-
-Instructions:
-- Always include biblical references (Book Chapter:Verse) in your response
-- Provide context and explanation when appropriate
-- If the question cannot be answered from the provided passages, say so honestly
-- Keep responses faithful to biblical teachings
-- Be respectful and reverent in your language
-
-Biblical Context:
-{context}
-
-Question: {question}
-
-Biblical Answer:"""
-        
-        self.prompt = PromptTemplate(
-            template=template,
-            input_variables=["context", "question"]
-        )
+        """Setup the biblical RAG prompt template from LangSmith Hub"""
+        try:
+            
+            # Initialize LangSmith client
+            client = Client()
+            
+            # Pull prompt from LangSmith Hub
+            self.prompt = client.pull_prompt("biblical-rag-assistant")
+            
+        except Exception as e:
+            print(f"Warning: Could not load prompt from LangSmith Hub: {e}")
+            print("Falling back to default prompt template...")
+            
     
     def create_vectorstore(self, documents: List[Document]) -> Chroma:
         """
@@ -192,6 +197,7 @@ Biblical Answer:"""
             | StrOutputParser()
         )
     
+    @traceable
     def ask_question(self, question: str) -> str:
         """
         Ask a question and get an answer from the RAG system
@@ -211,21 +217,25 @@ Biblical Answer:"""
         except Exception as e:
             return f"Error generating response: {str(e)}"
     
-    def get_similar_passages(self, query: str, k: int = 3) -> List[Document]:
+    @traceable
+    def ask_question_stream(self, question: str):
         """
-        Get similar passages without generating an answer
+        Ask a question and get a streaming answer from the RAG system
         
         Args:
-            query: Search query
-            k: Number of passages to return
+            question: The question to ask
             
-        Returns:
-            List of similar Document objects
+        Yields:
+            Streaming chunks of the generated answer
         """
-        if not self.retriever:
-            raise ValueError("Retriever not initialized. Create or load vector store first.")
+        if not self.rag_chain:
+            raise ValueError("RAG chain not initialized. Create or load vector store first.")
         
-        return self.vectorstore.similarity_search(query, k=k)
+        try:
+            for chunk in self.rag_chain.stream(question):
+                yield chunk
+        except Exception as e:
+            yield f"Error generating response: {str(e)}"
     
     def get_stats(self) -> Dict:
         """

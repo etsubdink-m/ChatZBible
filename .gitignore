@@ -1,3 +1,7 @@
+# data
+data/chroma_db/
+data/KJV.json
+
 # Python
 __pycache__/
 *.py[cod]

@@ -8,12 +8,3 @@ streamlit
 
 # Environment management
 python-dotenv
-
-# Optional: For local models
-# sentence-transformers==2.2.2
-# huggingface-hub==0.20.1
-
-# # Development and testing
-# pytest==7.4.3
-# black==23.12.1
-# flake8==7.0.0 

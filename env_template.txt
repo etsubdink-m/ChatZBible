@@ -1,6 +1,13 @@
 # API Keys - Replace with your actual keys
 GOOGLE_API_KEY=your_google_api_key_here
 
+# LangSmith
+LANGSMITH_API_KEY
+LANGSMITH_TRACING
+LANGSMITH_ENDPOINT
+LANGSMITH_API_KEY
+LANGSMITH_PROJECT
+
 # Optional: Alternative LLM providers
 # OPENAI_API_KEY=your_openai_api_key_here
 # ANTHROPIC_API_KEY=your_anthropic_api_key_here

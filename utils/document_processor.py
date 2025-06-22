@@ -41,56 +41,12 @@ class DocumentProcessor:
             documents.append(doc)
         
         # Create passage-level documents for better context
-        passage_docs = DocumentProcessor._create_passage_documents(bible_data)
-        documents.extend(passage_docs)
+        # passage_docs = DocumentProcessor._create_passage_documents(bible_data)
+        documents.extend(documents)
         
-        print(f"Created {len(documents)} documents ({len(bible_data)} verses + {len(passage_docs)} passages)")
         return documents
     
-    @staticmethod
-    def _create_passage_documents(bible_data: List[Dict]) -> List[Document]:
-        """Create passage-level documents for better context retrieval"""
-        passages = []
-        
-        # Group verses by book and chapter
-        chapters = {}
-        for verse in bible_data:
-            key = f"{verse['book']}_{verse['chapter']}"
-            if key not in chapters:
-                chapters[key] = []
-            chapters[key].append(verse)
-        
-        # Create passage documents (3-5 verses per passage)
-        for chapter_key, verses in chapters.items():
-            verses_sorted = sorted(verses, key=lambda x: x['verse'])
-            
-            for i in range(0, len(verses_sorted), 3):
-                passage_verses = verses_sorted[i:i+5]  # Take up to 5 verses
-                
-                if len(passage_verses) >= 2:  # Only create passages with 2+ verses
-                    passage_text = " ".join([v['text'] for v in passage_verses])
-                    first_verse = passage_verses[0]
-                    last_verse = passage_verses[-1]
-                    
-                    passage_doc = Document(
-                        page_content=passage_text,
-                        metadata={
-                            'book': first_verse['book'],
-                            'chapter': first_verse['chapter'],
-                            'verse_start': first_verse['verse'],
-                            'verse_end': last_verse['verse'],
-                            'reference': f"{first_verse['book']} {first_verse['chapter']}:{first_verse['verse']}-{last_verse['verse']}",
-                            'translation': first_verse.get('translation', 'KJV'),
-                            'testament': DocumentProcessor._get_testament(first_verse['book']),
-                            'book_number': DocumentProcessor._get_book_number(first_verse['book']),
-                            'chunk_type': 'passage',
-                            'verse_count': len(passage_verses)
-                        }
-                    )
-                    passages.append(passage_doc)
-        
-        return passages
-    
+  
     @staticmethod
     def _get_testament(book: str) -> str:
         """Determine if book is Old or New Testament"""
