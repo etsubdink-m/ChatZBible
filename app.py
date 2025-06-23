@@ -2,6 +2,10 @@
 Streamlit App for Biblical Question & Answer Assistant
 Simple, user-friendly interface for exploring the Bible
 """
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = sys.modules["pysqlite3"]
+
 import streamlit as st
 import sys
 import subprocess
