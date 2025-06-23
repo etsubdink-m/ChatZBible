@@ -2,9 +2,16 @@
 langchain
 langchain-google-genai
 langchain-chroma
+langsmith
 
 # UI Framework
 streamlit
 
 # Environment management
 python-dotenv
+
+# HTTP requests
+requests
+
+# Fix protobuf version conflict for Streamlit Cloud
+protobuf==3.20.3

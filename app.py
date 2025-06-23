@@ -51,18 +51,16 @@ def run_bible_setup():
         log_container = st.empty()
     
     try:
-        # Start the setup process
-        status_text.text("🚀 Starting Bible data setup...")
-        progress_bar.progress(10)
-        
-        # Run setup script as subprocess
+        # Start the setup process with proper encoding
         process = subprocess.Popen(
             [sys.executable, str(setup_script)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             bufsize=1,
-            universal_newlines=True
+            universal_newlines=True,
+            encoding='utf-8',  # Force UTF-8 encoding
+            errors='replace'   # Replace problematic characters
         )
         
         log_messages = []
@@ -107,8 +105,8 @@ def run_bible_setup():
         
         if return_code == 0:
             progress_bar.progress(100)
-            status_text.text("✅ Setup completed successfully!")
-            st.success(f"🎉 ✝️ {config.APP_TITLE} is ready!")
+            status_text.text("Setup completed successfully!")
+            st.success("Biblical assistant is ready!")
             time.sleep(2)
             st.rerun()
             return True
@@ -431,7 +429,7 @@ def main():
     
     # Page configuration
     st.set_page_config(
-        page_title=f"✝️ {config.APP_TITLE}",
+        page_title=f"{config.APP_TITLE}",
         page_icon=config.APP_ICON,
         layout="wide",
         initial_sidebar_state="expanded"
