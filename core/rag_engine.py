@@ -6,6 +6,10 @@ import os
 from typing import List, Dict, Optional
 from pathlib import Path
 
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = sys.modules["pysqlite3"]
+
 from langchain.chat_models import init_chat_model
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma

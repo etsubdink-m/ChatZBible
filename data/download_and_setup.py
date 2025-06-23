@@ -10,6 +10,10 @@ import json
 from pathlib import Path
 import shutil
 
+import pysqlite3
+import sys
+sys.modules["sqlite3"] = sys.modules["pysqlite3"]
+
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
